@@ -1,0 +1,31 @@
+import sys; args = sys.argv[1:]
+idx = int(args[0])-70
+
+#70: ... where each vowel occurs at least once
+#71: ... containing exactly 5 vowels
+#72: ... with w acting as vowel
+#73: ... where if all but the first 3 and last 3 letters are removed, a palindrome results
+#74: ... where there is exactly one b and one t, and they are adjacent to each other
+#75: ... with the longest contiguous block of one letter
+#76: ... with the greatest number of a repeated letter
+#77: ... with the greatest number of adjacent pairs of identical letters
+#78: ... with the greatest number of consonants
+#79: ... where no letter is repeated more than once
+
+re70 = r"/^(?=\w*a)(?=\w*e)(?=\w*i)(?=\w*o)(?=\w*u)[a-z]*$/m" #done
+re71 = r"/^([^\WaeiouA-Z]*[aeoiu]){5}[^\Waeiou]*$/m" #done
+re72 = r"/^(?=\w*[^\Waeiou]w[^\Waeiou]([^\Waeiou]|$))[a-z]*$/m" 
+re73 = r"/^(?=([a-z])(\w)(\w))\w*\3\2\1$|^(aa|a)$/m" #done
+re74 = r"/^[^\WA-Zbt]*(bt|tb)[^\Wbt]*$/m" #done
+re75 = r"/^[a-z]*(\w)\1\w*$/m" #done
+re76 = r"/^[a-z]*(\w)(\w*\1){5}\w*$/m" #done
+re77 = r"/^[a-z]*((\w)\2){3}\w*$/m" #done
+re78 = r"/^(\w*[^\Waeiou]){13}/m" #done
+re79 = r"/^(([a-z])(?!\w*\2\w*\2))*$/m" #done
+
+myRegexLst = [re70, re71, re72, re73, re74, re75, re76, re77, re78, re79]
+
+if idx < len(myRegexLst):
+  print(myRegexLst[idx])
+ 
+#Lillian Schirano, pd4, 2024
