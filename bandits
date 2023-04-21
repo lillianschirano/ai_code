@@ -1,0 +1,32 @@
+import sys; args = sys.argv[1:]
+import math, random 
+
+runs = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+avgs = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+usb = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+sums = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+
+
+def bandit(testNum, armIdx, pullVal):
+    global runs
+    global avgs
+    global usb
+    global sums
+    if testNum == 0: 
+        runs = {0:1, 1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1, 8:1, 9:1}
+        usb = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+        avgs = {0:2.7, 1:2.7, 2:2.7, 3:2.7, 4:2.7, 5:2.7, 6:2.7, 7:2.7, 8:2.7, 9:2.7}
+        sums = {0:0, 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0}
+        return 0
+    else: 
+        runs[armIdx]+=1
+        sums[armIdx]+=pullVal
+        avgs[arm] = sums[armIdx]/runs[armIdx]
+        for arm in usb:
+            usb[arm] = avgs[arm] + (.95)*math.sqrt(math.log1p(testNum)/runs[arm])
+        maxi = armIdx
+        for avg in usb:
+            if usb[avg] > usb[maxi]: maxi = avg
+        return maxi
+        
+# Lillian Schirano, pd4, 2024
