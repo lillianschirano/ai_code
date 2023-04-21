@@ -1,0 +1,113 @@
+import sys; args = sys.argv[1:]
+import time
+
+def get_max(blocks, c, fc):
+    max = 0
+    char = "a"
+    for b in blocks:
+        if len(c[b]) + len(fc[b]) == 1:
+            return b
+        if len(c[b]) + len(fc[b]) == 2:
+            return b
+        if blocks[b][0]*blocks[b][1] > max:
+            max = blocks[b][0]*blocks[b][1]
+            char = b
+    return char
+           
+def update_ds(blocks, choices, flipped_choices, board, max_choice, choice, char, path):
+    affected_places = set()
+    board2 = [[cur for cur in b] for b in board]
+    if choice[0]+max_choice[1] > len(board): return ""
+    if choice[1]+max_choice[0] > len(board[0]): return ""
+    for i in range(choice[0], choice[0]+max_choice[1]):
+        for j in range(choice[1], choice[1]+max_choice[0]):
+            if board[i][j] != ".":
+                return ""
+            else:
+                board2[i][j] = char
+                affected_places.add((i, j))
+    blocks2 = {b:blocks[b] for b in blocks if b!=char}
+    choices2 = {c:[opt for opt in choices[c] if not opt in affected_places] for c in choices if c != char}
+    flipped_choices2 = {c:[opt for opt in flipped_choices[c] if not opt in affected_places] for c in flipped_choices if c!= char}
+    path2 = {p for p in path}
+    path2.add(max_choice)
+    return (blocks2, choices2, flipped_choices2, board2, path2)
+
+
+def solve_pzl(blocks, board_size, choices, flipped_choices, board, path):
+    if not blocks: return [board, path]
+    max_choice = get_max(blocks, choices, flipped_choices)
+    if not max_choice: return ""
+    for c in choices[max_choice]:
+        updated_ds = update_ds(blocks, choices, flipped_choices, board, blocks[max_choice], c, max_choice, path)
+        if updated_ds:
+            solved = solve_pzl(updated_ds[0], board_size, updated_ds[1], updated_ds[2], updated_ds[3], updated_ds[4])
+            if solved: return solved
+    for c in flipped_choices[max_choice]:
+        updated_ds = update_ds(blocks, choices, flipped_choices, board, (blocks[max_choice][1], blocks[max_choice][0]), c, max_choice, path)
+        if updated_ds:
+            solved = solve_pzl(updated_ds[0], board_size, updated_ds[1], updated_ds[2], updated_ds[3], updated_ds[4])
+            if solved: return solved
+    return False
+
+def sort_choices(opt_c, c, fc):
+    for char in c:
+        opt_c[len(c[char])+len(fc[char])].append(char)
+    return opt_c
+
+def main(temp):
+    start_time = time.time()
+    temp = " ".join(temp)
+    temp = temp.replace("x", " ")
+    temp = temp.replace("X", " ")
+    temp = temp.split()
+    board_size = (int(temp[1]), int(temp[0]))
+    temp = temp[2:]
+    alphabet = "abcdefghijklmnopqrstuvwxyz"
+    blocks = {alphabet[i]:(int(temp[i]), int(temp[i+1])) for i in range(0, len(temp), 2)}
+    num = sum([blocks[b][0]*blocks[b][1] for b in blocks])
+    if num <= board_size[0]*board_size[1]:
+        choices = {b:[(i, j) for j in range(board_size[0]-blocks[b][0]+1) for i in range(board_size[1]-blocks[b][1]+1)] for b in blocks}
+        flipped_choices = {}
+        for b in blocks:
+            if blocks[b][0] != blocks[b][1]:
+                temp = []
+                for i in range(board_size[1]-blocks[b][0]+1):
+                    for j in range(board_size[0]-blocks[b][1]+1):
+                        temp.append((i, j))
+                flipped_choices[b] = temp
+            else:
+                flipped_choices[b] = []
+        final_board = solve_pzl(blocks, board_size, choices, flipped_choices, [["." for i in range(board_size[0])] for j in range(board_size[1])], set())
+        if final_board:
+            seen = {","}
+            final_path = []
+            for i, lst in enumerate(final_board[0]):
+                for ind, char in enumerate(lst):
+                    if char == ".":
+                        w = 0
+                        while ind < len(lst) and lst[ind] == ".":
+                            w+=1
+                            lst[ind] = ","
+                        h = 1
+                        lst[w] = "."
+                        while i+h < len(final_board) and final_board[i+h][w] == ".":
+                            h+=1
+                            final_board[h][w] = ","
+                        final_path.append((w, h))
+                    else:
+                        if not char in seen:
+                            seen.add(char)
+                            if blocks[char] in final_board[1]:
+                                final_path.append((blocks[char][1], blocks[char][0]))
+                            else: final_path.append(blocks[char])
+            string_path = "Decomposition:"
+            for step in final_path:
+                string_path+=str(step[0]) + "x" + str(step[1]) + " "
+            print(string_path)
+        else: print("No Solution")
+    else: print("No Solution")
+
+if __name__ == "__main__": main(args)
+
+#Lillian Schirano, pd4, 2024
