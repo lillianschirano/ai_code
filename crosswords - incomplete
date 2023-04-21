@@ -1,0 +1,176 @@
+import sys; args = sys.argv[1:]
+
+# rules:
+# words are at least 3 characters long.
+# non-blocking squares must appear in both a horizontal and vertical word.
+# symmetric with respect to 180 rotation about the puzzle's center.
+# non-blocking squares are connected.
+
+def main():
+    l = 1
+    w = 1
+    b = 1
+    file_name = ""
+    chars = []
+    for arg in args:
+        if not "#" in arg and "." in arg: file_name = arg
+        elif not "x" in arg: b = int(arg)
+        elif not ("v" in arg or "h" in arg or "V" in arg or "H" in arg): 
+            a = arg.split("x")
+            l = int(a[0])
+            w = int(a[1])
+        else: 
+            num1 = 0
+            num2 = 0
+            word = ""
+            if arg[2] in "0123456789": 
+                num1 = int(arg[1:3])
+                if arg[5] in "0123456789": 
+                    num2 = int(arg[4:6])
+                    word = arg[6:]
+                else: 
+                    num2 = int(arg[4])
+                    word = arg[5:]
+            else: 
+                num1 = int(arg[1])
+                if len(arg) > 4 and arg[4] in "0123456789": 
+                    num2 = int(arg[3:5])
+                    word = arg[5:]
+                else: 
+                    num2 = int(arg[3])
+                    word = arg[4:]
+            if word: chars.append((arg[0], num1, num2, word))
+            else: chars.append((arg[0], num1, num2, "#"))
+    h = [[i+j for i in range(w)] for j in range(0, l*w, w)]
+    v = [[j+(i*w) for i in range(l)] for j in range(w)]
+    brd = implied_spots(make_brd(l, w, chars), h, v, b)
+    #print("\n".join([make_brd(l, w, chars)[a*w:a*w+w] for a in range(l)]))
+    if b == l*w: print("\n".join("#"*w for i in range(l)))
+    elif b == 0: print("\n".join([brd[a*w:a*w+w] for a in range(l)]))
+    elif b == l*w-9 and not chars: print("\n".join(make_no_center(l, w)))
+    else: 
+        pos_set = {i for i in range(len(brd)//2) if brd[i] == "-" and brd[abs(len(brd)-i-1)] == "-"}
+        for p in pos_set:
+            if (final:=bf(implied_spots(make_move(brd, p), h, v, b), l, w, pos_set, b, h, v)):
+                print("\n".join([final[a*w:a*w+w] for a in range(l)]))
+                return
+
+def bf(brd, l, w, pos_set, limit, h, v): 
+    if brd == "": return ""
+    if (i:=invalid(brd, l, w)) > limit - (c:=brd.count("#")): return ""
+    print("\n".join([brd[a*w:a*w+w] for a in range(l)]))
+    if c == limit: 
+        if i == 0: return brd
+        else: return ""
+    for p in pos_set:
+        if brd[p] == "-" and brd[abs(len(brd)-p-1)] == "-": 
+            if (b:=bf(implied_spots(make_move(brd, p), h, v, limit), l, w, pos_set, limit, h, v)): return b
+    return ""
+                
+def implied_spots(brd, h, v, limit):
+    l = len(v)
+    w = len(h)
+    brd = [b for b in brd]
+    if limit%2 == 1: 
+        brd[((l//2)*w)+(w//2)] = "#"
+    for i in range(len(brd)):
+        if brd[i] == "#":
+            for vp in v:
+                if i in vp: 
+                    ls = vp[:vp.index(i)]
+                    rs = vp[vp.index(i)+1:]
+                    if len(ls) < 3:
+                        for s in ls: 
+                            if brd[s] == "-" or brd[s] == "#": brd[s] = "#"
+                            else: return ""
+                    else:
+                        for j in range(1, 4):
+                            if brd[ls[-j]] == "#":
+                                for k in ls[-j:]: 
+                                    if brd[k] == "-" or brd[k] == "#": brd[k] = "#"
+                                    else: return ""
+                    if len(rs) < 3:
+                        for s in rs: 
+                            if brd[s] == "-" or brd[s] == "#": brd[s] = "#"
+                            else: return ""
+                    else: 
+                        for j in range(2, -1, -1):
+                            if brd[rs[j]] == "#":
+                                for k in rs[:j]: 
+                                    if brd[k] == "-" or brd[k] == "#": brd[k] = "#"
+                                    else: return ""
+            for hp in h: 
+                if i in hp: 
+                    ls = hp[:hp.index(i)]
+                    rs = hp[hp.index(i)+1:]
+                    if len(ls) < 3:
+                        for s in ls: 
+                            if brd[s] == "-" or brd[s] == "#": brd[s] = "#"
+                            else: return ""
+                    else:
+                        for j in range(1, 4):
+                            if brd[ls[-j]] == "#":
+                                for k in ls[-j:]: 
+                                    if brd[k] == "-" or brd[k] == "#": brd[k] = "#"
+                                    else: return ""
+                    if len(rs) < 3:
+                        for s in rs: 
+                            if brd[s] == "-" or brd[s] == "#": brd[s] = "#"
+                            else: return ""
+                    else: 
+                        for j in range(2, -1, -1):
+                            if brd[rs[j]] == "#":
+                                for k in rs[:j]: 
+                                    if brd[k] == "-" or brd[k] == "#": brd[k] = "#"
+                                    else: return ""
+    #print("".join(brd))
+    return "".join(brd)
+
+def make_no_center(l, w):
+    brd = [["#" for i in range(w)] for j in range(l)]
+    s1, s2 = (w//2)-1, (l//2)-1
+    for i in range(3):
+        for j in range(3): brd[s2+i][s1+j] = "-"
+    return ["".join(b) for b in brd]
+
+def make_brd(l, w, chars):
+    brd = ["-" for i in range(l*w)]
+    blocked = []
+    for c in chars:
+        if c[0] == "h" or c[0] == "H":
+            for i in range(len(c[3])): blocked.append((c[1]*w+c[2]+i, c[3][i]))
+        if c[0] == "v" or c[0] == "V":
+            for i in range(len(c[3])): blocked.append((((c[1]+i)*w)+c[2], c[3][i]))
+    for block in blocked: 
+        if block[1] and block[1] != "#": brd[block[0]] = block[1]
+        else: 
+            b = make_move("".join(brd), block[0])
+            brd = [c for c in b]
+    #print("\n".join(["".join(brd)[a*w:a*w+w] for a in range(l)]))
+    return "".join(brd) 
+
+def invalid(pzl, l, w):
+    sum = 0
+    rows = [pzl[a*w:a*w+w] for a in range(l)]
+    cols = [pzl[a:l*w:w] for a in range(w)]
+    for row in rows:
+        if "#" in row: 
+            row = row.split("#")
+            for r in row:
+                if len(r) != 0 and len(r) < 3: sum+=len(r)
+    for col in cols:
+        if "#" in col:
+            col = col.split("#")
+            for c in col: 
+                if len(c) != 0 and len(c) < 3: sum+=len(r)
+    return sum
+
+def make_move(pzl, blocked_space):
+    pzl = [p for p in pzl]
+    pzl[blocked_space] = "#"
+    pzl[abs(len(pzl)-1-blocked_space)] = "#"
+    return "".join(pzl)
+
+if __name__ == '__main__': main() 
+    
+# Lillian Schirano, pd4, 2024
