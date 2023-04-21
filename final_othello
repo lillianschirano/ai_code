@@ -1,0 +1,210 @@
+import sys; args = sys.argv[1:]
+import time
+
+CASH = {}
+CACHE2 = {}
+hole_limit = 13
+qm_hl = 11
+TARGET_LEVEL = 5
+mid_level = 26
+open_b = {"..................*x*......xx.....*xo..........................." : "34","...........*......*x**.....xx....*xoo....x......................" : "21","...........*......*x*o*....xxx...*xoo*...x......................" : "20","...*......*x*.....*xxo*...*xox*..*xoo*...x......................" : "37","..**......*x****..*xxxx...*xoo...*xooo...x......................" : "12","..****....*xxx**..*xxxx...*xoo...*xooo...x......................" : "26","..*****..**xxx**.*xxxxx..*xooo...*xooo...x......*..............." : "10","...***...*oxxx**.*xoxxx*..xxxxx..*xooo...x*....................." : "4","..**o.*...oxox*..*xooxx*.*xxoxx*.*xxxxx*.x***.***..............." : "3",".*xoo....*xxox*..*xoxxx*.*xxoxx*.*xxxxx*.x***.*................." : "1",".oooox*...oxxx*...xxxxx..*xxoxx*..xxxxx*.x***.**................" : "6",".oooooo..xxxxx*.**xxxxx..*xxoxx*.*xxxxx*.x*******..............." : "25","*oooooo.*xxoxx*.*xxxxxx.*oxooxx*.*xxxxx*.x*******..............." : "0","ooooooo..oxoxx*.*xoxxxx**xxooxx**xxxxxx**x********.............." : "40","ooooooo.*oxoox*.*xooxxx**xoooxx*xxxxxxx*ox********.............." : "8","ooooooo.ooxoox*.xxxxxxx.*xoooxx*xxxxxxx*ox********.............." : "24","ooooooo.ooooox*.ooxxxxx*oooooxx*oxxxxxx*ox*********............." : "49","ooooooo.ooooox*.ooxxxxx*oooooxx*ooxxxxx*ox******xo*.....*......." : "56","ooooooo.ooooox*.ooxxxxx*oooooxx*ooxxxxx*ox******ox*.....ox*....." : "58","ooooooo.ooooox*.ooxxxxx*oooooxx*ooxxxxx*ox******oo*.....ooo....." : "50","ooooooo.ooooox*.ooxxxxx*oooooxx*ooxxxxx*oo******ooo.....ooo....." : "42","ooooooo.ooooox**ooxxxxx*oooxoxx*oooxxxx*ooox****ooo**...ooo....." : "51","ooooooo.ooooox**ooxoxxx*oooooxx*ooooxxx*oooo****oooo....ooo....." : "14","ooooooo.ooooooo*ooxoxox*oooooxx*ooooxxx*oooo****oooo....ooo....." : "23","ooooooo*oooooooxooxoxoxooooooxx*ooooxxx*oooo****oooo....ooo....." : "7","ooooooooooooooooooxoxoxooooooxx*ooooxxx*oooo****oooo....ooo....." : "47","ooooooooooooooooooxoooxooooooox*ooooxxx*oooo**xooooo..**ooo....." : "31","ooooooooooooooooooxoooooooooooooooooxxx*oooo**xooooo..**ooo....." : "39","ooooooooooooooooooxooooooooxooooooooxooooooo*xxooooo****ooo....." : "54","...................*......*ox......xo*......*...................": "19", ".................*ox......*ox......xo*......*...................":"26",".........*****....ooo*....xxo*.....xo*.......*..................": "11","..*......*ox**....ooo*...*xxo*.....xo*.......*..................":"12",".***.**..*oooo...*oxo*....xxo*.....xo*.......*..................": "17",".*.*.*....oooo...xoxo*...oooo....*.xo*..........................": "3","...x.*....xxoo*..xoxo*...oooo*..**ooo*....***...................": "32",".*ox**....oooo...xoxo*...xooo*..x*ooo*.....**...................": "1",".xxx**....xooo*.oooxo*..*oooo*..x*ooo*....**....................": "4",".xxxx*....xxoo*.ooxxo**.*oooo*..xoooo*..*.****..................": "5",".xxxxx...ooooo..oooxo**.*oooo*..xoooo*..*****...................": "22",".xxxxx*..oooooo.oooxo*x**oooo*..xoooo*..*****...................": "23",".xxxxx..*ooooox.oooxo*ox*oooo**oxoooo*.******...................": "39",".xxxxxo*.oooooo.oooxo*ox*oooo*.xxoooo*.x*****...................": "7",".xxxxxxx.oooooo.oooxo*ox*oooo**xxoooo*.x*****...................": "42","*xxxxxxx*oxoooo*ooxxo*ox*oxoo**xxoooo*.x*ox***..***.............": "15","*xxxxxxx*oxxxxxxooxxo*ox*oxoo**xxoooo*.x*ooo**..****............": "0","xxxxxxxx*xxxxxxxooxxo*ox*oxoo**xxoooo*.x*ooo**..****............": "8","xxxxxxxxxxxxxxxxoxxxo*ox*oxoo**xxoooo*.x*ooo**..****............" :"24","xxxxxxxxxxxxxxxxxxxxo*oxxxxoo**xxoooo*.x*ooo**..*****..........." :"40","xxxxxxxxxxxxxxxxxxxxo*oxxxxoo**xxxooo*.xxooo**..*****..........." :"21","xxxxxxxxxxxxxxxxxxxxxxxxxxxoo*.xxxooo*.xxooo**..*****..........." :"29","xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxooo*.xxooo**..*****..........." :"37","xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxx.xxooo*...*****..........." :"44"}
+open_book = {}
+for key in open_b:
+    open_book[key.replace("*", ".")] = open_b[key]
+
+h_paths = [[i+j for i in range(8)] for j in range(0, 64, 8)]
+v_paths = [[j+(i*8) for i in range(8)] for j in range(8)]
+d_paths = [[j+(i*9) for i in range(8) if j+(i*9) < (i+1)*8] for j in range(8)]
+d_paths = [lst for lst in d_paths if len(lst) >= 3]
+d2_paths = [[j+(i*7) for i in range(8) if j+(i*7) <= j*8] for j in range(8)]
+d2_paths = [lst for lst in d2_paths if len(lst) >= 3]
+d3_paths = [[j+(i*7) for i in range(7) if j+(i*7) < (j%8+1)*8] for j in range(15, 64, 8)]
+d3_paths = [lst for lst in d3_paths if len(lst) >= 3]
+d4_paths = [[j+(i*9) for i in range(7) if j+(i*9) < 63] for j in range(8, 57, 8)]
+d4_paths = [lst for lst in d4_paths if len(lst) >= 3]
+edge_paths = {0:[h_paths[0], v_paths[0]], 7: [h_paths[0][-1::-1], v_paths[-1]], 56: [h_paths[-1], v_paths[0][-1::-1]], 63: [h_paths[-1][-1::-1], v_paths[-1][-1::-1]]}
+
+all_paths = []
+for path in h_paths: all_paths.append(path)
+for path in v_paths: all_paths.append(path)
+for path in d_paths: all_paths.append(path)
+for path in d2_paths: all_paths.append(path)
+for path in d3_paths: all_paths.append(path)
+for path in d4_paths: all_paths.append(path)
+pos_dct = {p:[path for path in all_paths if p in path] for p in range(64)}
+bad_moves = {0: [1, 8, 9], 7: [6, 15, 14], 56: [48, 49, 57], 63: [55, 54, 62]}
+
+def main():
+    global hole_limit
+    verbose = True
+    brd = '.'*27 + "ox......xo" + '.'*27 
+    tk, not_tk = '', ''
+    move = []
+    if args:
+        for a in args:
+            a = a.lower()
+            if len(a) == 64 and "." in a: brd = a
+            elif a == 'x': tk, not_tk = a, 'o'
+            elif  a == 'o': tk, not_tk = a, 'x'
+            elif a == "v": verbose = False
+            elif a[0:2] == "hl": hole_limit = int(a[2:])
+            else:
+                let = 'abcdefgh'
+                if len(a) == 2 and a[0] in let: move.append(int(let.index(a[0])) + (int(a[1])-1)*8)
+                elif a==0: move.append(0)
+                elif len(a) <= 2: move.append(int(a))
+                else:
+                    for i in range(0, len(a), 2):
+                        if a[i] == "_": move.append(int(a[i+1]))
+                        else: move.append(int(a[i:i+2]))
+    if hole_limit == -1: hole_limit = qm_hl
+    if not tk:
+        if brd.count('.')%2 == 1: tk, not_tk = 'o', 'x'
+        else: tk, not_tk = 'x', 'o'
+        moves = findMoves(brd, tk)
+    else:
+        moves = findMoves(brd, tk)
+    if not verbose: print_snapshot(brd, moves, tk, 65)
+    else: print("preferred move: " + str(preferred_move(brd, tk)))
+    if move: last_move = move[-1]
+    for m in move: 
+        if m >= 0: 
+            brd = makeMove(brd, tk, m)
+            if not verbose or m == last_move: print(tk + " plays to " + str(m))
+            t = tk
+            tk, not_tk = not_tk, t
+            moves = findMoves(brd, tk)
+            if not moves: 
+                t = tk
+                tk, not_tk = not_tk, t
+                moves = findMoves(brd, tk)
+            if not verbose or m == last_move:
+                print_snapshot(brd, moves, tk, m)
+    if brd in open_book: print("preferred move: " + open_book[brd] + " min score: 20 path: " + str([open_book[brd]]))
+        
+def preferred_move(brd, tk):
+    eTkn = 'x'
+    if tk == 'x': eTkn = 'o'
+    best_choices = {0:"6", 1:"1", 2:"3", 3:"3", 4:"3", 5:"3", 6:"1", 7:"6", 8:"1", 9:"1", 10:"3", 11:"3", 12:"3", 13:"3", 14:"1", 15:"1", 16:"3", 17:"3", 18:"3", 19:"3", 20:"3", 21:"3", 22:"3", 23:"3", 24:"3", 25:"3", 26:"3", 27:"3", 28:"3", 29:"3", 30:"3", 31:"3", 32:"3", 33:"3", 34:"3", 35:"3", 36:"3", 37:"3", 38:"3", 39:"3", 40:"3", 41:"3", 42:"3", 43:"3", 44:"3", 45:"3", 46:"3", 47:"3", 48:"1", 49:"1", 50:"3", 51:"3", 52:"3", 53:"3", 54:"1", 55:"1", 56:"6", 57:"1", 58:"3", 59:"3", 60:"3", 61:"3", 62:"1", 63:"6"}
+    possible_moves = [*findMoves(brd, tk)]
+    best_choices = update_best_choices(best_choices, brd, tk, possible_moves)
+    best = -1
+    for p in possible_moves:
+        cur = set()
+        for lst in pos_dct[p]:
+            for item in lst: cur.add(brd[item])
+        if not eTkn in cur: best_choices[p]+=1
+    if len(possible_moves) == 1: return possible_moves[0]
+    elif possible_moves: best = possible_moves[0]
+    for m in possible_moves:
+        if best_choices[m] > best_choices[best]: best = m
+    return best
+
+def update_best_choices(best_choices, brd, tk, pos):
+    not_tk = 'x'
+    if tk == 'x': not_tk = 'o'
+    if brd[0] == tk: 
+        best_choices[1], best_choices[8], best_choices[9] = "4", "4", "4"
+    if brd[7] == tk: 
+        best_choices[6], best_choices[15], best_choices[14] = "4", "4", "4"
+    if brd[56] == tk: 
+        best_choices[48], best_choices[57], best_choices[49] = "4", "4", "4"
+    if brd[63] == tk: 
+        best_choices[62], best_choices[55], best_choices[54] = "4", "4", "4"
+    for i in range(2, 6):
+            if brd[i-1] == "." and brd[i+1] == ".": best_choices[i] = "3"
+            if not not_tk in brd[i+1:] or not not_tk in brd[:i]: best_choices[i] = "3"
+    for i in range(2, 6):
+            if brd[i-1+56] == "." and brd[i+1+56] == ".": best_choices[i] = "3"
+            if not not_tk in brd[i+1+56:] or not not_tk in brd[56:i+56]: best_choices[i] = "3"
+    sub = brd[0:57:8]
+    for i in range(2, 6):
+            if sub[i-1] == "." and sub[i+1] == ".": best_choices[i*8] = "3"
+            if not not_tk in sub[i+1:] or not not_tk in sub[:i]: best_choices[i*8] = "3"
+    sub = brd[7:64:8]
+    for i in range(2, 6):
+            if sub[i-1] == "." and sub[i+1] == ".": best_choices[(i*8)+7] = "3"
+            if not not_tk in sub[i+1:] or not not_tk in sub[:i]: best_choices[(i*8)+7] = "3"
+    for p in pos: 
+        if p in [10, 11, 12, 13, 14, 17, 22, 25, 30, 33, 38, 4, 46, 50, 51, 52, 53, 54] and brd[p+1] == not_tk: best_choices[p] = "4"
+    return best_choices
+    
+def print_snapshot(brd, moves, tk, mv):
+    copyBrd = [b for b in brd]
+    to_print = "possible moves for " + tk + ": "
+    pos = []
+    for m in moves:
+        copyBrd[m] = "*"
+        pos.append(m)
+    if mv != 65: copyBrd[mv] = copyBrd[mv].upper()
+    copyBrd = "".join(copyBrd)
+    print("\n".join([copyBrd[i-8:i] for i in range(8, 65, 8)]))
+    print(brd + " " + str(brd.count('x')) + "/" + str(brd.count('o')))
+    if moves: 
+        pos = sorted(pos)
+        for m in pos:
+            to_print+= str(m) + ", "
+        print(to_print[:-2])
+    print("preferred move: " + str(preferred_move(brd, tk)))
+
+def makeMove(brd, tk, move):
+    brd = [*brd]
+    brd[move] = tk
+    for lst in pos_dct[move]:
+        inds = [c for c in lst if brd[c] == tk]
+        ls = [i for i in inds if i<move]
+        rs = [i for i in inds if i>move]
+        if ls:
+            if not "." in [brd[c] for c in lst[lst.index(ls[-1]):lst.index(move)]]:
+                for i in lst:
+                    if i < move and i > ls[-1]:
+                        brd[i] = tk
+        if rs:
+            if not "." in [brd[c] for c in lst[lst.index(move):lst.index(rs[0])]]:
+                for i in lst: 
+                    if i > move and i < rs[0]:
+                        brd[i] = tk
+    final = "".join(brd)
+    return final    
+
+def make_ds(brd):
+    return {i for i in range(64) if brd[i] == "."}
+
+def findMoves(brd, tk):
+    key = (brd, tk)
+    if key in CACHE2: return CACHE2[key]
+    not_tk = 'o'
+    if tk == 'o': not_tk = 'x'
+    moves = set()
+    op_pos = make_ds(brd)
+    for pos in op_pos:
+        for s in pos_dct[pos]:
+            ind = s.index(pos)
+            rs = [brd[i] for i in s[ind+1:]]
+            if rs and rs[0] == not_tk and tk in rs:
+                if not '.' in rs[:rs.index(tk)]: 
+                    moves.add(pos)
+                    break
+            ls = [brd[i] for i in s[:ind]]
+            if ls and ls[-1] == not_tk and tk in ls: 
+                if not '.' in ls[len(ls)-ls[-1::-1].index(tk):]: 
+                    moves.add(pos)
+                    break
+    CACHE2[key] = moves
+    return moves
+
+class Strategy:
+    # implement all the required methods on your own
+    logging = True # turns on logging
+    def best_strategy(self, board, player, best_move, running):
+        time.sleep(1)
+        if running.value:
+            best_move.value = open_book[board]
+            # Note: It is not required for your Strategy class to have a "legal_moves" method,
+            # but you must determine legal moves yourself. The server will NOT accept invalid moves.
+
+        
+     
+if __name__ == '__main__': main() 
+    
+# Lillian Schirano, pd4, 2024
